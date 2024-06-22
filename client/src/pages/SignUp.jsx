@@ -31,7 +31,7 @@ const SignUp = () => {
       });
       const data = await res.json();
       if (data.success) {
-        navigate("sign-in");
+        navigate("/sign-in");
       }
 
       if (!data?.success) {
