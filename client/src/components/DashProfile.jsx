@@ -1,9 +1,9 @@
-import { Alert, Button, TextInput } from "flowbite-react";
+import { Alert, Button, Modal, Spinner, TextInput } from "flowbite-react";
 import React from "react";
 import { useEffect } from "react";
 import { useRef } from "react";
 import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import {
   getDownloadURL,
   getStorage,
@@ -13,6 +13,16 @@ import {
 import { app } from "../firebase";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import {
+  updateStart,
+  updateSuccess,
+  updateFailure,
+  deleteAccountStart,
+  deleteAccountSuccess,
+  deleteAccountFailure,
+  signOut,
+} from "../redux/user/userSlice";
+import { HiOutlineExclamationCircle } from "react-icons/hi";
 
 const DashProfile = () => {
   const { currentUser } = useSelector((state) => state?.user);
@@ -21,9 +31,16 @@ const DashProfile = () => {
   const [imageUrl, setImageUrl] = useState(null);
   const [imageFileUploadProgress, setImageFileUploadProgress] = useState(null);
   const [imageFileUploadError, setImageFileUploadError] = useState(null);
-  const imageRef = useRef();
+  const [formData, setFormData] = useState({});
+  const [formDataSubmission, setFormDataSubmission] = useState(null);
+  const [formDataError, setFormDataError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [accountDeleteLoading, setAccountDeleteLoading] = useState(false);
 
-  console.log(imageFileUploadProgress, imageFileUploadError);
+  console.log(formData);
+  const imageRef = useRef();
+  const dispatch = useDispatch();
 
   const handleImageChange = (e) => {
     let img = e.target.files[0];
@@ -67,8 +84,12 @@ const DashProfile = () => {
       },
       (error) => {
         // Handle unsuccessful uploads
-        setImageFileUploadError("Error while uploading image (Exceed the size limit of 2MB)");
-        setImageFileUploadProgress(null)
+        setImageFileUploadError(
+          "Error while uploading image (Exceed the size limit of 2MB)"
+        );
+        setImageFileUploadProgress(null);
+        setImageObject(null);
+        setImageUrl(null);
       },
       () => {
         // Handle successful uploads on complete
@@ -76,15 +97,95 @@ const DashProfile = () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           setImageUrl(downloadURL);
           setImageFileUploadError(null);
+          setFormData((prev) => ({ ...prev, profilePicture: downloadURL }));
         });
       }
     );
   };
 
+  const inputChangeHandler = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const formSubmitHandler = async (e) => {
+    e.preventDefault();
+    if (Object.keys(formData)?.length === 0) {
+      return;
+    } else {
+      try {
+        dispatch(updateStart());
+        setLoading(true);
+        setFormDataError(null);
+        setFormDataSubmission(null);
+        let res = await fetch(`/api/user/update/${currentUser._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+          body: JSON.stringify(formData),
+        });
+        let data = await res.json();
+        if (!res.ok) {
+          dispatch(updateFailure(data.message));
+          setFormDataSubmission(null);
+          setFormDataError(data.message);
+          setLoading(false);
+          return;
+        } else {
+          dispatch(updateSuccess(data));
+          setFormDataSubmission("User updated successfully!");
+          setFormDataError(null);
+          setLoading(false);
+        }
+      } catch (error) {
+        dispatch(updateFailure(error));
+        setFormDataSubmission(null);
+        setFormDataError(error);
+        setLoading(false);
+      }
+    }
+  };
+
+  const deleteAccountHandler = async () => {
+    try {
+      setAccountDeleteLoading(true);
+      dispatch(deleteAccountStart());
+      let res = await fetch(`/api/user/delete/${currentUser._id}`, {
+        method: "DELETE",
+        withCredentials: true,
+      });
+      let data = await res.json();
+      if (!res.ok) {
+        dispatch(deleteAccountFailure(data.message));
+        setAccountDeleteLoading(false);
+        setShowModal(true);
+        return;
+      } else {
+        dispatch(deleteAccountSuccess());
+        setAccountDeleteLoading(true);
+        setShowModal(false);
+        return;
+      }
+    } catch (error) {
+      setShowModal(false);
+    }
+  };
+
+  const signOutAccountHandler = async () => {
+    try {
+      let res = await fetch("/api/user/signout", {
+        method: "POST",
+      });
+      let data = await res.json();
+      dispatch(signOut());
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="mx-auto w-full px-3 max-w-lg">
       <h1 className="text-center my-8 text-3xl font-semibold">Profile</h1>
-      <form className="flex flex-col gap-4">
+      <form className="flex flex-col gap-4" onSubmit={formSubmitHandler}>
         <input
           type="file"
           accept="image/*"
@@ -103,8 +204,10 @@ const DashProfile = () => {
               value={imageFileUploadProgress}
               text={`${imageFileUploadProgress}%`}
               styles={buildStyles({
-                textSize:'16px',
-                pathColor: `rgba(62, 152, 199, ${imageFileUploadProgress / 100})`
+                textSize: "16px",
+                pathColor: `rgba(62, 152, 199, ${
+                  imageFileUploadProgress / 100
+                })`,
               })}
             />
           )}
@@ -112,33 +215,101 @@ const DashProfile = () => {
           <img
             src={imageUrl || currentUser?.profilePicture}
             alt="user"
-            className={`rounded-full h-full w-full object-cover border-4 border-[lightgray] ${imageFileUploadProgress && imageFileUploadProgress < 100 && 'opacity-60'}`}
+            className={`rounded-full h-full w-full object-cover border-4 border-[lightgray] ${
+              imageFileUploadProgress &&
+              imageFileUploadProgress < 100 &&
+              "opacity-60"
+            }`}
           />
         </div>
         {imageFileUploadError && (
           <Alert color={"failure"}>{imageFileUploadError}</Alert>
         )}
         <TextInput
-          id="username"
+          id="userName"
           type="text"
           placeholder="username"
           defaultValue={currentUser?.userName}
+          onChange={inputChangeHandler}
         />
         <TextInput
           id="email"
           type="email"
           placeholder="email"
           defaultValue={currentUser?.email}
+          onChange={inputChangeHandler}
         />
-        <TextInput id="password" type="password" placeholder="Password" />
+        <TextInput
+          id="password"
+          type="password"
+          placeholder="Password"
+          onChange={inputChangeHandler}
+        />
         <Button type="submit" gradientDuoTone={"purpleToPink"} outline>
-          Update
+          {loading ? (
+            <>
+              <Spinner size="sm" />
+              <span className="pl-2">Loading.....</span>
+            </>
+          ) : (
+            <span>Update</span>
+          )}
         </Button>
       </form>
+      {formDataSubmission && (
+        <Alert className="mt-3" color={"success"}>
+          {formDataSubmission}
+        </Alert>
+      )}
+      {formDataError && (
+        <Alert className="mt-3" color={"failure"}>
+          {formDataError}
+        </Alert>
+      )}
       <div className="text-red-500 flex justify-between my-2 font-semibold dark:font-normal">
-        <span className="cursor-pointer">Delete Account</span>
-        <span className="cursor-pointer">Sign Out</span>
+        <span className="cursor-pointer" onClick={() => setShowModal(true)}>
+          Delete Account
+        </span>
+        <span
+          className="cursor-pointer"
+          onClick={() => signOutAccountHandler()}
+        >
+          Sign Out
+        </span>
       </div>
+      {showModal && (
+        <Modal
+          show={showModal}
+          onClose={() => setShowModal(false)}
+          size="md"
+          popup
+        >
+          <Modal.Header />
+          <Modal.Body>
+            <div className="text-center">
+              <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+              <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                Are you sure you want to delete this account?
+              </h3>
+              <div className="flex justify-center gap-4">
+                <Button color="failure" onClick={() => deleteAccountHandler()}>
+                  {accountDeleteLoading ? (
+                    <>
+                      <Spinner size="sm" />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <span>Yes, I'm sure</span>
+                  )}
+                </Button>
+                <Button color="gray" onClick={() => setShowModal(false)}>
+                  No, cancel
+                </Button>
+              </div>
+            </div>
+          </Modal.Body>
+        </Modal>
+      )}
     </div>
   );
 };

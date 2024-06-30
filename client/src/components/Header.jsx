@@ -5,6 +5,7 @@ import { IoMdSearch } from "react-icons/io";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { toggleTheme } from "../redux/theme/themeSlice";
+import {signOut} from "../redux/user/userSlice"
 
 const Header = () => {
   const location = useLocation();
@@ -14,6 +15,19 @@ const Header = () => {
 
   const themeHandler = () => {
     dispatch(toggleTheme());
+  };
+
+  
+  const signOutAccountHandler = async () => {
+    try {
+      let res = await fetch("/api/user/signout", {
+        method: "POST",
+      });
+      let data = await res.json();
+      dispatch(signOut());
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -66,7 +80,7 @@ const Header = () => {
               <Dropdown.Item>Dashboard</Dropdown.Item>
             </Link>
             <Dropdown.Divider />
-            <Dropdown.Item>Sign-Out</Dropdown.Item>
+            <Dropdown.Item onClick={() => signOutAccountHandler()}>Sign-Out</Dropdown.Item>
           </Dropdown>
         ) : (
           <Link to={"/sign-in"}>
