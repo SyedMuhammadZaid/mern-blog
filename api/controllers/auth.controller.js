@@ -34,10 +34,9 @@ export const signUp = async (req, res, next) => {
   }
 };
 
-
 export const signIn = async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(email,password)
+  console.log(email, password);
   if (!email || !password || email == "" || password == "") {
     next(errorHandler(400, "All fields are required"));
     return;
@@ -57,7 +56,10 @@ export const signIn = async (req, res, next) => {
 
     const { password: pass, ...rest } = emailValid._doc;
     rest["success"] = true;
-    const token = jwt.sign({ id: emailValid._id }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { id: emailValid._id, isAdmin: emailValid.isAdmin },
+      process.env.JWT_SECRET
+    );
     res
       .status(200)
       .cookie("access_token", token, {
@@ -69,7 +71,6 @@ export const signIn = async (req, res, next) => {
   }
 };
 
-
 export const google = async (req, res, next) => {
   const { name, email, googlePhotoUrl } = req.body;
   try {
@@ -77,30 +78,42 @@ export const google = async (req, res, next) => {
     if (user) {
       const { password: pass, ...rest } = user._doc;
       rest["success"] = true;
-      let token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      let token = jwt.sign(
+        { id: user._id, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET
+      );
       res
         .status(200)
         .cookie("access_token", token, {
           httpOnly: true,
         })
         .json(rest);
-    }
-    else{
-      let genPass = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    } else {
+      let genPass =
+        Math.random().toString(36).slice(-8) +
+        Math.random().toString(36).slice(-8);
       let encryptedPassword = bcryptjs.hashSync(genPass, 10);
       let user = new User({
-        userName: name.toLowerCase().split(' ').join('') + Math.random().toString(9).slice(-4),
+        userName:
+          name.toLowerCase().split(" ").join("") +
+          Math.random().toString(9).slice(-4),
         email: email,
         password: encryptedPassword,
-        profilePicture: googlePhotoUrl
-      })
+        profilePicture: googlePhotoUrl,
+      });
       await user.save();
-      let token = bcryptjs.sign({id: user._id}, process.env.JWT_SECRET);
+      let token = jwt.sign(
+        { id: user._id, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET
+      );
       const { password: pass, ...rest } = user._doc;
       rest["success"] = true;
-      res.status(200).cookie('access_token',token,{httpOnly: true}).json(rest);
+      res
+        .status(200)
+        .cookie("access_token", token, { httpOnly: true })
+        .json(rest);
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
