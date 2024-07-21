@@ -79,3 +79,67 @@ export const signOut = (req, res, next) => {
     next(error);
   }
 };
+
+export const getUsers = async (req, res, next) => {
+  if (!req.user.isAdmin)
+    return errorHandler(403, "You are not allowed to see users");
+  try {
+    let startIndex = req.query.startIndex || 0;
+    let limit = req.query.limit || 9;
+    let sortDirection = req.query.order == "asc" ? 1 : -1;
+    let users = await User.find()
+      .skip(startIndex)
+      .limit(limit)
+      .sort({ createdAt: sortDirection });
+
+    let userWithoutPassword = users.map((user) => {
+      const { password, ...rest } = user._doc;
+      return rest;
+    });
+
+    const totalUsers = await User.countDocuments();
+
+    const now = new Date();
+    const oneMonthAgo = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      now.getDate()
+    );
+
+    const lastMonthUsers = await User.countDocuments({
+      createdAt: { $gte: oneMonthAgo },
+    });
+
+    res.status(200).json({
+      users: userWithoutPassword,
+      totalUsers,
+      lastMonthUsers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const userDelete = async (req, res, next) => {
+  if (!req.user.isAdmin || req.params.userId !== req.user.id) {
+    return errorHandler(403, "You are not allowed to delete a user");
+  }
+  try {
+    await User.findByIdAndDelete(req.params.userIdToDelete);
+    res.status(200).json("user deleted successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUser = async (req, res, next) => {
+  try {
+    let data = await User.find({ _id: req.params.userId });
+    console.log("getUserApi",data);
+    if (!data) return errorHandler(404, "User not found");
+    const { password, ...rest } = data[0]._doc;
+    return res.json({ status: 200, rest });
+  } catch (error) {
+    next(error);
+  }
+};

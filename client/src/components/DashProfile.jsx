@@ -308,7 +308,7 @@ const DashProfile = () => {
                   {accountDeleteLoading ? (
                     <>
                       <Spinner size="sm" />
-                      <span>Loading...</span>
+                      <span className='ml-2'>Loading...</span>
                     </>
                   ) : (
                     <span>Yes, I'm sure</span>
