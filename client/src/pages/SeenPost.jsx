@@ -5,12 +5,14 @@ import CallToAction from "../components/CallToAction";
 import { useSelector } from "react-redux";
 import { AiFillLike } from "react-icons/ai";
 import CommentSection from "../components/CommentSection";
+import PostCard from "../components/postCards";
 
 const SeenPost = () => {
   const { postSlug } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [post, setPost] = useState([]);
+  const [recentPosts, setRecentPosts] = useState([]);
 
   const fetchPosts = async () => {
     try {
@@ -20,7 +22,7 @@ const SeenPost = () => {
       });
       console.log(res);
       let data = await res.json();
-      console.log(data)
+      console.log(data);
       if (!res.ok) {
         setLoading(false);
         setError(true);
@@ -38,6 +40,23 @@ const SeenPost = () => {
   useEffect(() => {
     fetchPosts();
   }, [postSlug]);
+
+  useEffect(() => {
+    const fetchRecentArticles = async () => {
+      try {
+        let res = await fetch("/api/post/get?limit=3&order=desc", {
+          withCredentials: true,
+        });
+        let data = await res.json();
+        if (res.ok) {
+          setRecentPosts(data.posts);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchRecentArticles();
+  }, []);
 
   if (loading)
     return (
@@ -80,6 +99,19 @@ const SeenPost = () => {
 
       <div className="my-4 max-w-xl mx-auto w-full">
         <CommentSection postId={post && post._id} />
+      </div>
+
+      <div className="flex items-center flex-col justify-center w-full max-w-4xl mx-auto my-2">
+        <h2 className="text-center dark:text-white text-gray-500">
+          Recent Articles
+        </h2>
+        <div className='mt-6 flex justify-between items-center w-full gap-4 flex-wrap md:flex-nowrap'>
+          {
+            recentPosts.map((post, index) => {
+              return <PostCard post={post} key={index} />
+            })
+          }
+        </div>
       </div>
     </main>
   );

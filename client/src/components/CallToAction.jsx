@@ -6,7 +6,8 @@ const CallToAction = () => {
     <div className="w-full flex flex-col md:flex-row border border-teal-500 rounded-tl-xl rounded-br-xl">
       <div className="flex-1 flex items-center justify-center flex-col md:py-2 py-4 text-center">
         <h2 className="text-2xl font-semibold">
-          Want to learn more about Java-script
+          Want to learn HTML, CSS and JavaScript by building fun and engaging
+          projects?
         </h2>
         <p className="text-gray-600 font-medium">
           Check out these resources with 100 javascript projects

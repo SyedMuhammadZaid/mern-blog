@@ -80,7 +80,7 @@ const CommentSection = ({ postId }) => {
         </Button>
       </div>
       <p className="my-4 md:my-6 mx-2">
-        Comments <span className="py-1 px-2 border">{comments?.length}</span>
+        Comments <span className="py-1 px-2 border ml-2">{comments?.length > 0 ? comments?.length : 0}</span>
       </p>
       {comments?.length > 0 ? (
         comments.map((comment) => {

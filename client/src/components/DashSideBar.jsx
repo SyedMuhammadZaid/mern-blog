@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Sidebar } from "flowbite-react";
-import { HiUser, HiArrowRight, HiDocumentText, HiUserGroup } from "react-icons/hi";
+import {
+  HiUser,
+  HiArrowRight,
+  HiDocumentText,
+  HiUserGroup,
+  HiChat,
+} from "react-icons/hi";
+import { MdDashboard } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { signOut } from "../redux/user/userSlice";
@@ -35,10 +42,15 @@ const DashSideBar = () => {
     <Sidebar className="w-full">
       <Sidebar.Items>
         <Sidebar.ItemGroup className="flex flex-col gap-1">
+          <Link to={"/dashboard?tab=dashboard"}>
+            <Sidebar.Item active={tab == "dashboard" || !tab} icon={MdDashboard}>
+              Dashboard
+            </Sidebar.Item>
+          </Link>
           <Link to="/dashboard?tab=profile">
             <Sidebar.Item
               active={tab == "profile"}
-              label={currentUser?.isAdmin ? 'Admin' : ' User'}
+              label={currentUser?.isAdmin ? "Admin" : " User"}
               labelColor={"dark"}
               icon={HiUser}
             >
@@ -47,16 +59,21 @@ const DashSideBar = () => {
           </Link>
           {currentUser?.isAdmin && (
             <>
-            <Link to={"/dashboard?tab=posts"}>
-              <Sidebar.Item active={tab == "posts"} icon={HiDocumentText}>
-                Posts
-              </Sidebar.Item>
-            </Link>
-            <Link to={"/dashboard?tab=users"}>
-              <Sidebar.Item active={tab == "users"} icon={HiUserGroup}>
-                Users
-              </Sidebar.Item>
-            </Link>
+              <Link to={"/dashboard?tab=posts"}>
+                <Sidebar.Item active={tab == "posts"} icon={HiDocumentText}>
+                  Posts
+                </Sidebar.Item>
+              </Link>
+              <Link to={"/dashboard?tab=users"}>
+                <Sidebar.Item active={tab == "users"} icon={HiUserGroup}>
+                  Users
+                </Sidebar.Item>
+              </Link>
+              <Link to={"/dashboard?tab=comments"}>
+                <Sidebar.Item active={tab == "comments"} icon={HiChat}>
+                  Comments
+                </Sidebar.Item>
+              </Link>
             </>
           )}
           <Sidebar.Item icon={HiArrowRight} onClick={signOutAccountHandler}>
