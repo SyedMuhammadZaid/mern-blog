@@ -9,6 +9,7 @@ import CreatePost from "./pages/CreatePost";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
+import Search from "./pages/Search";
 import SeenPost from "./pages/SeenPost";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -34,6 +35,7 @@ function App() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/about" element={<About />} />
           <Route path="/post/:postSlug" element={<SeenPost />} />
+          <Route path="/Search" element={<Search />} />
         </Routes>
         <FooterComp />
       </BrowserRouter>

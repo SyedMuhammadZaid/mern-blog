@@ -42,8 +42,8 @@ export const get = async (req, res, next) => {
         ...(req.query.postId && { _id: req.query.postId }),
         ...(req.query.searchTerm && {
           $or: [
-            { title: { $regex: req.query.searchTerm, options: "i" } },
-            { content: { $regex: req.query.searchTerm, options: "i" } },
+            { title: { $regex: new RegExp(req.query.searchTerm, "i") } },
+            { content: { $regex: new RegExp(req.query.searchTerm, "i") } },
           ],
         }),
       })

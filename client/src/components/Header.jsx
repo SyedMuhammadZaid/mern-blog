@@ -1,23 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Avatar, Button, Dropdown, Navbar, TextInput } from "flowbite-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { IoMdSearch } from "react-icons/io";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { toggleTheme } from "../redux/theme/themeSlice";
-import {signOut} from "../redux/user/userSlice"
+import { signOut } from "../redux/user/userSlice";
 
 const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state?.user);
   const { theme } = useSelector((state) => state?.theme);
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    const search = new URLSearchParams(location.search);
+    const searchQuery = search.get("searchTerm");
+    if (searchQuery) {
+      setSearchTerm(searchQuery);
+    }
+  }, [location.search]);
 
   const themeHandler = () => {
     dispatch(toggleTheme());
   };
 
-  
   const signOutAccountHandler = async () => {
     try {
       let res = await fetch("/api/user/signout", {
@@ -27,6 +37,16 @@ const Header = () => {
       dispatch(signOut());
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const formSubmitHandler = (e) => {
+    e.preventDefault();
+    if (searchTerm) {
+      const search = new URLSearchParams(location.search);
+      search.set("searchTerm", searchTerm);
+      const searchQueryStr = searchTerm.toString();
+      navigate(`/search?searchTerm=${searchQueryStr}`);
     }
   };
 
@@ -41,12 +61,14 @@ const Header = () => {
         </span>
         Blog
       </Link>
-      <form>
+      <form onSubmit={formSubmitHandler}>
         <TextInput
           type={"text"}
           placeholder="Search..."
           rightIcon={IoMdSearch}
           className="hidden lg:inline"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </form>
       <Button className="w-12 h-18 lg:hidden" color="gray" pill>
@@ -59,10 +81,7 @@ const Header = () => {
           pill
           onClick={themeHandler}
         >
-          {
-            theme == 'light' ? <FaMoon /> : <FaSun />
-          }
-          
+          {theme == "light" ? <FaMoon /> : <FaSun />}
         </Button>
         {currentUser ? (
           <Dropdown
@@ -80,7 +99,9 @@ const Header = () => {
               <Dropdown.Item>Dashboard</Dropdown.Item>
             </Link>
             <Dropdown.Divider />
-            <Dropdown.Item onClick={() => signOutAccountHandler()}>Sign-Out</Dropdown.Item>
+            <Dropdown.Item onClick={() => signOutAccountHandler()}>
+              Sign-Out
+            </Dropdown.Item>
           </Dropdown>
         ) : (
           <Link to={"/sign-in"}>

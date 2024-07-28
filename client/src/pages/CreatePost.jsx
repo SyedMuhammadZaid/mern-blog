@@ -92,9 +92,9 @@ const CreatePost = () => {
           }
         >
           <option selected>Select a category</option>
-          <option value="JavaScript">JavaScript</option>
-          <option value="React js">React js</option>
-          <option value="Next js">Next js</option>
+          <option value="javascript">JavaScript</option>
+          <option value="reactjs">React js</option>
+          <option value="nextjs">Next js</option>
         </Select>
         <div className="my-4 px-2 py-4 flex justify-between items-center gap-2 border-dashed border-2 border-teal-500">
           <FileInput
