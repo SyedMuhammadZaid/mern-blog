@@ -42,11 +42,18 @@ const DashSideBar = () => {
     <Sidebar className="w-full">
       <Sidebar.Items>
         <Sidebar.ItemGroup className="flex flex-col gap-1">
-          <Link to={"/dashboard?tab=dashboard"}>
-            <Sidebar.Item active={tab == "dashboard" || !tab} icon={MdDashboard}>
-              Dashboard
-            </Sidebar.Item>
-          </Link>
+          {currentUser?.isAdmin && (
+            <>
+              <Link to={"/dashboard?tab=dashboard"}>
+                <Sidebar.Item
+                  active={tab == "dashboard" || !tab}
+                  icon={MdDashboard}
+                >
+                  Dashboard
+                </Sidebar.Item>
+              </Link>
+            </>
+          )}
           <Link to="/dashboard?tab=profile">
             <Sidebar.Item
               active={tab == "profile"}
